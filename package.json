@@ -4,7 +4,8 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "build": "webpack --config webpack/webpack.config.js"
+        "build": "webpack --config webpack/webpack.config.js",
+        "pack": "cd dist/ && bestzip ../extension-build.zip *"
     },
     "repository": {
         "type": "git",
