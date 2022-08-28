@@ -4,10 +4,12 @@ module.exports = {
     mode: "production",
     entry: {
         background: path.resolve(__dirname, "..", "src", "background.ts"),
+        contentPage: path.resolve(__dirname, "..", "src", "contentPage.ts"),
     },
     output: {
         path: path.join(__dirname, "../dist"),
         filename: "[name].js",
+        clean: true
     },
     resolve: {
         extensions: [".ts", ".js"],
