@@ -1,0 +1,26 @@
+{
+    "name": "YouTube search on Spotify",
+    "description": "This extension adds a new entry on spotify context menu to search directly to youtube",
+    "version": "1.0",
+    "manifest_version": 3,
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "js": [
+                "contentPage.js"
+            ],
+            "matches": [
+                "https://open.spotify.com/*"
+            ]
+        }
+    ],
+    "host_permissions": [
+        "https://open.spotify.com/*"
+    ]
+}
