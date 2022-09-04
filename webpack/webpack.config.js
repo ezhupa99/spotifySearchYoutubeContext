@@ -2,6 +2,7 @@ const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 module.exports = {
     mode: "production",
+    devtool: 'inline-source-map',
     entry: {
         background: path.resolve(__dirname, "..", "src", "background.ts"),
         contentPage: path.resolve(__dirname, "..", "src", "contentPage.ts"),
