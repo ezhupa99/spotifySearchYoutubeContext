@@ -6,6 +6,16 @@
     "background": {
         "service_worker": "background.js"
     },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "script.js"
+            ],
+            "matches": [
+                "https://open.spotify.com/*"
+            ]
+        }
+    ],
     "content_scripts": [
         {
             "js": [
