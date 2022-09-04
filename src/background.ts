@@ -1,15 +1,18 @@
-let active = false;
-
-function makeOrange(color: string): void {
-    document.body.style.backgroundColor = color;
+const tabFilter = {
+    url: "*://open.spotify.com/*"
 }
 
-chrome.action.onClicked.addListener((tab) => {
-    active = !active;
-    const color = active ? 'orange' : 'white';
-    chrome.scripting.executeScript({
-        target: { tabId: tab.id ? tab.id : -1 },
-        func: makeOrange,
-        args: [color]
-    }).then();
+chrome.runtime.onInstalled.addListener(() => {
+
+    // * Reload all tabs to make sure popup and content script message API works
+    chrome.tabs.query(tabFilter, function (tabs) {
+
+        reloadSpotifyChromeTabs(tabs);
+    })
 });
+
+function reloadSpotifyChromeTabs(tabs: chrome.tabs.Tab[]) {
+    tabs.forEach((tab: chrome.tabs.Tab) => {
+        chrome.tabs.reload(tab.id as number);
+    });
+}
