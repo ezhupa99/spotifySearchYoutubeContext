@@ -1,110 +1,139 @@
+import { Instance } from 'tippy.js';
+
+interface HTMLDivElementWithTippy extends HTMLDivElement {
+	_tippy: Instance;
+}
+
 const observer = new MutationObserver((mutations, observer) => {
+	const mutation = mutations.find(mutation => {
+		//  filter all mutations that are not tooltips
+		if (!(mutation.target as HTMLDivElement).id.includes('tippy'))
+			return false;
 
-    const mutation = mutations
-        .find(mutation => {
+		const tippyElement = mutation.target as HTMLDivElement;
 
-            //  filter all mutations that are not tooltips
-            if (!(mutation.target as HTMLDivElement).id.includes('tippy'))
-                return false;
+		// filter all mutations that their tooltip is empty
+		if (tippyElement.childNodes.length === 0) return false;
 
-            const tippyElement = mutation.target as HTMLDivElement;
+		// filter all mutations that might have elements but no context element
+		if (!tippyElement.querySelector('#context-menu')) return false;
 
-            // filter all mutations that their tooltip is empty
-            if (tippyElement.childNodes.length === 0)
-                return false;
+		const contextMenu = tippyElement.querySelector(
+			'#context-menu'
+		) as HTMLDivElement;
 
-            // filter all mutations that might have elements but no context element
-            if (!tippyElement.querySelector('#context-menu'))
-                return false;
+		// filter all mutations that have context menu but don't have elements
+		if (contextMenu.childNodes.length === 0) return false;
 
-            const contextMenu = tippyElement.querySelector('#context-menu') as HTMLDivElement;
+		const isSong = Array.from(
+			contextMenu.querySelectorAll('li[role=presentation]')
+		).find(
+			li =>
+				li.outerHTML.toLowerCase().includes('go to song radio') === true
+		);
 
-            // filter all mutations that have context menu but don't have elements
-            if (contextMenu.childNodes.length === 0)
-                return false;
+		if (!isSong) return false;
 
-            const isSong = Array.from(contextMenu.querySelectorAll('li[role=presentation]')).find((li) =>
-                li.outerHTML.toLowerCase().includes("go to song radio") === true
-            );
+		return true;
+	});
 
-            if (!isSong)
-                return false;
+	if (!mutation) return;
 
-            return true;
-        });
+	const target = mutation.target as HTMLDivElementWithTippy;
 
-    if (!mutation)
-        return;
+	const ulElementElement = target.querySelector('ul') as HTMLUListElement;
 
-    const target = mutation.target as HTMLDivElement;
+	const liItemsElement = ulElementElement.querySelectorAll(
+		'li[role=presentation]'
+	);
 
-    const contextMenuElement = target.querySelector('#context-menu') as HTMLDivElement;
+	// remmove all existing youtube music elements
+	Array.from(liItemsElement)
+		.filter(li => {
+			const span = li.querySelector('span') as HTMLSpanElement;
 
-    const ulElementElement = contextMenuElement.querySelector('ul') as HTMLUListElement;
+			if (span.textContent === 'Open Youtube Search Link') {
+				return true;
+			}
 
-    const liItemsElement = ulElementElement.querySelectorAll('li[role=presentation]');
+			return false;
+		})
+		.forEach(element => {
+			element.remove();
+		});
 
-    // remmove all existing youtube music elements
-    Array.from(liItemsElement).filter((li) => {
-        const span = li.querySelector('span') as HTMLSpanElement;
+	const showCreditsElement = Array.from(liItemsElement).find(
+		li => li.outerHTML.toLowerCase().includes('show credits') === true
+	);
 
-        if (span.textContent === 'Open Youtube Search Link') {
-            return true;
-        }
+	const youtubeSearchLinkElement = showCreditsElement?.cloneNode(
+		true
+	) as HTMLLIElement;
 
-        return false;
-    }).forEach(element => {
-        element.remove();
-    });
+	if (!youtubeSearchLinkElement) return;
 
-    const showCreditsElement = Array.from(liItemsElement).find((li) => li.outerHTML.toLowerCase().includes("show credits") === true);
+	const spanElement = youtubeSearchLinkElement.querySelector('span');
 
-    const youtubeSearchLinkElement = showCreditsElement?.cloneNode(true) as HTMLLIElement;
+	if (!spanElement) return;
 
-    if (!youtubeSearchLinkElement) return;
+	spanElement.textContent = 'Open Youtube Search Link';
 
-    const spanElement = youtubeSearchLinkElement.querySelector('span');
+	ulElementElement.appendChild(youtubeSearchLinkElement);
 
-    if (!spanElement) return;
+	youtubeSearchLinkElement
+		.querySelector('button')
+		?.addEventListener('click', () => {
 
-    spanElement.textContent = "Open Youtube Search Link";
+            debugger;
+			const reference = target._tippy.reference as HTMLDivElement;
 
-    ulElementElement.appendChild(youtubeSearchLinkElement);
+			let songInfo: string | null = '';
 
-    youtubeSearchLinkElement.querySelector('button')?.addEventListener('click', () => {
+			console.log(reference);
 
-        const nowPlayingWidgetElement = document.querySelector('[data-testid="now-playing-widget"]');
+			if (!(reference && reference.dataset && reference.dataset.testid === 'tracklist-row')) {
+				const nowPlayingWidgetElement = document.querySelector(
+					'[data-testid="now-playing-widget"]'
+				);
 
-        if (!nowPlayingWidgetElement) return;
+				if (!nowPlayingWidgetElement) return;
 
-        const dataItems = nowPlayingWidgetElement?.querySelectorAll('a');
+				const dataItems =
+					nowPlayingWidgetElement?.querySelectorAll('a');
 
-        if (!dataItems) return;
+				if (!dataItems) return;
 
-        const songInfo = Array.from(dataItems)
-            // first link is the image which doesn't have a text/title
-            .slice(1)
-            // get only element text
-            .map(element => element.textContent)
-            // aggregate all text into one string
-            .reduce((acc, curr) => { return acc + " " + curr; });
+				songInfo = Array.from(dataItems)
+					// first link is the image which doesn't have a text/title
+					.slice(1)
+					// get only element text
+					.map(element => element.textContent)
+					// aggregate all text into one string
+					.reduce((acc, curr) => {
+						return acc + ' ' + curr;
+					});
+			} else {
+                songInfo = reference.innerText.split('\n').slice(1, 3).join(" - ");
+            }
 
-        if (!songInfo) return;
+			if (!songInfo) return;
 
-        const youtubeSearchLink = `https://www.youtube.com/results?search_query=${songInfo}`;
+			const youtubeSearchLink = `https://www.youtube.com/results?search_query=${songInfo}`;
 
-        // open youtube search link in new tab
-        window.open(youtubeSearchLink, '_blank');
+			// open youtube search link in new tab
+			window.open(youtubeSearchLink, '_blank');
 
-        const tippyContext = document.querySelector('[data-tippy-root]') as any;
+			const tippyContext = document.querySelector(
+				'[data-tippy-root]'
+			) as HTMLDivElementWithTippy;
 
-        if (!tippyContext) return;
+			if (!tippyContext) return;
 
-        tippyContext._tippy.destroy();
-    });
+			tippyContext._tippy.destroy();
+		});
 });
 
 observer.observe(document, {
-    attributes: true,
-    subtree: true,
+	attributes: true,
+	subtree: true,
 });
